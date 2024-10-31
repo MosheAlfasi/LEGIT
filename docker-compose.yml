@@ -1,0 +1,34 @@
+version: '3.9'
+
+networks:
+  anomaly-detector-network:
+    driver: bridge
+
+services:
+  anomaly-detector-db:
+    image: mysql:latest
+    container_name: anomaly-detector-db
+    environment:
+      MYSQL_ROOT_PASSWORD: anomaly-detector
+    ports:
+      - "3306:3306"
+    networks:
+      - anomaly-detector-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  anomaly-detector-service:
+    image: moshealfasi/anomaly-detector-service:3
+    container_name: anomaly-detector-service
+    ports:
+      - "8081:8081"
+    environment:
+      - TZ=Asia/Jerusalem
+    depends_on:
+      anomaly-detector-db:
+        condition: service_healthy
+    networks:
+      - anomaly-detector-network
